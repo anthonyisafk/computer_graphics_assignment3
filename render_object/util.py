@@ -1,4 +1,4 @@
-from helpers import *
+from render_object.helpers import *
 from render.render_9627 import render
 import numpy as np
 import math
