@@ -1,8 +1,5 @@
-from render.render_9627 import render
-from render_object.util import render_object
-
+from helpers import *
 import numpy as np
-
 
 def ambient_light(ka, Ia):
     return ka * Ia
@@ -31,7 +28,4 @@ def specular_light(P, N, color, cam_pos, ks, n, light_positions, light_intensiti
         L_hat = L / np.linalg.norm(L)
         cos_ba = np.dot(2 * N * np.dot(N, L_hat) - L_hat, V_hat)
         I[i] = ks * ((cos_ba) ** n) * light_intensities[i]
-=    return np.sum(I, axis=0) * color
-
-
-
+    return np.sum(I, axis=0) * color
