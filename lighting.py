@@ -13,6 +13,7 @@ def diffuse_light(P, N, color, kd, light_positions, light_intensities):
         L = light_positions[i] - P
         L_hat = L / np.linalg.norm(L)
         cos_a = np.dot(N, L_hat)
+        cos_a = cos_a if cos_a > 0 else 0 
         I[i] = kd * cos_a * light_intensities[i]
     return np.sum(I, axis=0) * color
 
@@ -26,6 +27,9 @@ def specular_light(P, N, color, cam_pos, ks, n, light_positions, light_intensiti
     for i in range(s):
         L = light_positions[i] - P
         L_hat = L / np.linalg.norm(L)
-        cos_ba = np.dot(2 * N * np.dot(N, L_hat) - L_hat, V_hat)
+        cos_a = np.dot(N, L_hat)
+        cos_ba = abs(np.dot(2 * N * np.dot(N, L_hat) - L_hat, V_hat))
+        if cos_ba <= 0 or cos_a <= 0:
+            cos_ba = 0
         I[i] = ks * ((cos_ba) ** n) * light_intensities[i]
     return np.sum(I, axis=0) * color
