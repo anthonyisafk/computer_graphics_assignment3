@@ -1,9 +1,11 @@
+from logging import exception
 from render.render_9627 import render
-from render_object.util import render_object
+from render_object.util import *
 from helpers import *
 from lighting import *
 
 import numpy as np
+import cv2 as cv
 
 
 def calculate_normals(vertices, face_indices):
@@ -24,3 +26,35 @@ def calculate_normals(vertices, face_indices):
         normals[i] = normalize(normals[i])
     return normals
 
+
+def shade_gouraud(
+    verts_p, verts_n, verts_c, b_coords, cam_pos, ka, kd, ks, n,
+    light_positions, light_intensities, Ia, X
+):
+    pass
+
+
+def  shade_phong(
+    verts_p, verts_n, verts_c, b_coords, cam_pos, ka, kd, ks, n,
+    light_position, light_intensities, Ia, X
+):
+    pass
+
+
+
+def render_object(
+    shader, focal, eye, lookat, up, bg_color, M, N, H, W, verts, vert_colors,
+    face_indices, ka, kd, ks, n, light_position, light_intensities, Ia
+):
+    num_faces = len(face_indices)
+    normals = calculate_normals(verts, face_indices)
+    verts2d, depths = project_cam_lookat(focal, eye, lookat, up, verts)
+    verts_rast, __, __ = rasterize(verts2d, M, N, H, W)
+    keep_faces = get_keep_indices(face_indices, verts_rast, M, N)
+
+    if shader == "gouraud":
+        pass
+    elif shader == "phong":
+        pass
+    else:
+        exit("`shader` can only be \"gouraud\" or \"phong\".")
