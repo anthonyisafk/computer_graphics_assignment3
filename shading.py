@@ -19,7 +19,7 @@ def calculate_normals(vertices, face_indices):
         V1 = vertices[current_face[1]] 
         V2 = vertices[current_face[2]]
         E0 = V1 - V0
-        E1 = V2 - V1
+        E1 = V2 - V0
         # Each triangle a vertex is contained in contributes to the total normal.
         normals[current_face] += normalize(np.cross(E0, E1))
     for i in range(num_vertices):
