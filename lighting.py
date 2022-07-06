@@ -38,7 +38,7 @@ def specular_light(P, N, color, cam_pos, ks, n, light_positions, light_intensiti
 def total_lighting(P, N, color, cam_pos, ka, kd, ks, n, light_positions, light_intensities, Ia):
     n = len(light_positions)
     I = np.zeros(3)
-    I = ambient_light(ka, Ia) + \
+    I = ambient_light(ka, Ia) * color + \
         diffuse_light(P, N, color, kd, light_positions, light_intensities) + \
         specular_light(P, N, color, cam_pos, ks, n, light_positions, light_intensities)
     return I
