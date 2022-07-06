@@ -36,6 +36,23 @@ def get_keep_indices(face_indices, verts_rast, M, N):
     return np.array(keep_faces)
 
 
+def calculate_useful_depths(keep_faces, depths):
+    num_keep = len(keep_faces)
+    triangle_depths = np.empty((num_keep))
+    for i in range(num_keep):
+        triangle_depths[i] = np.mean(depths[keep_faces[i]])
+    sorted_triangle_depth_idx = np.argsort(triangle_depths)[::-1] # sort in descending order
+
+    return triangle_depths, sorted_triangle_depth_idx
+
+
 def find_barycenter(verts):
     """Find the barycenter OF A TRIANGLE, given its vertex coordinates."""
     return np.sum(verts, axis=0) / 3
+
+
+def save_image(img, img_w, img_h, filename: str):
+	for i in range(img_w):
+		for j in range(img_h):
+			img[i][j] = 255 * np.flip(img[i][j])
+	cv.imwrite(filename, img)
