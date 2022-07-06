@@ -1,11 +1,88 @@
-from logging import exception
 from render.render_9627 import *
 from render_object.util import *
 from helpers import *
 from lighting import *
+from phong import *
 
 import numpy as np
 import cv2 as cv
+
+
+def render_object(
+    shader, focal, eye, lookat, up, bg_color, M, N, H, W, verts, vert_colors,
+    face_indices, ka, kd, ks, n, light_position, light_intensities, Ia
+):
+    img = initialize_img(M, N, bg_color)
+    normals = calculate_normals(verts, face_indices)
+    verts2d, depths = project_cam_lookat(focal, eye, lookat, up, verts)
+    verts_rast, __, __ = rasterize(verts2d, M, N, H, W)
+    verts_rast = verts_rast.astype(int)
+
+    keep_faces = get_keep_indices(face_indices, verts_rast, M, N)
+    triangle_depths, idx = calculate_useful_depths(keep_faces, depths)
+
+    num_faces = len(keep_faces)
+    img = color_vertices(img, vert_colors, verts_rast, keep_faces)
+    b_coords = np.zeros((num_faces, 3))
+    for i in range(num_faces):
+        b_coords[i] = find_barycenter(verts[keep_faces[i]])
+
+    if shader == "gouraud":
+        for i in range(num_faces):
+            face = keep_faces[idx[i]]
+            img = shade_gouraud(
+                verts_rast[face], normals[face], vert_colors[face], b_coords[idx[i]],
+                eye, ka, kd, ks, n, light_position, light_intensities, Ia, img, M, N
+            )
+        save_image(img, M, N, "image\\gouraud_all.jpg")
+    elif shader == "phong":
+        for i in range(num_faces):
+            face = keep_faces[idx[i]]
+            img = shade_phong(
+                verts_rast[face], normals[face], vert_colors[face], b_coords[idx[i]],
+                eye, ka, kd, ks, n, light_position, light_intensities, Ia, img, M, N
+            )
+        save_image(img, M, N, "image\\phong_all.jpg")
+    else:
+        exit("`shader` can only be \"gouraud\" or \"phong\".")
+
+
+def shade_gouraud(
+    verts_p, verts_n, verts_c, b_coords, cam_pos,
+    ka, kd, ks, n, light_positions, light_intensities, Ia, X, M, N
+):
+    I = np.zeros(3)
+    for i in range(3):
+        I = total_lighting(
+            b_coords, verts_n[i], verts_c[i], cam_pos, ka, kd, ks, n, light_positions, light_intensities, Ia
+        )
+        X[verts_p[i, 0]][verts_p[i, 1]] = I
+        verts_c[i] = I
+    X = shade_triangle(X, verts_p, verts_c, "gouraud", M, N)
+    return X
+
+
+def shade_phong(
+    verts_p, verts_n, verts_c, b_coords, cam_pos,
+    ka, kd, ks, n, light_positions, light_intensities, Ia, X, M, N
+):
+    n = len(verts_p)
+    lines = get_lines(verts_p)
+    I = np.zeros(3)
+
+    ykmin = np.zeros(n)
+    ykmax = np.zeros(n)
+
+    for i in range(n):
+        ykmin[i] = min(verts_p[i, 1], verts_p[(i+1)%n, 1])
+        ykmax[i] = max(verts_p[i, 1], verts_p[(i+1)%n, 1])
+
+    ymin = int(min(ykmin))
+    ymax = int(max(ykmax))
+    return phong(
+        X, verts_p, verts_n, verts_c, cam_pos, lines, ykmin, ykmax, ymin, ymax, b_coords,
+        ka, kd, ks, n, light_positions, light_intensities, Ia, M, N
+    )
 
 
 def calculate_normals(vertices, face_indices):
@@ -25,59 +102,3 @@ def calculate_normals(vertices, face_indices):
     for i in range(num_vertices):
         normals[i] = normalize(normals[i])
     return normals
-
-
-def shade_gouraud(
-    verts_3d, verts_p, verts_n, verts_c, b_coords, cam_pos,
-    ka, kd, ks, n, light_positions, light_intensities, Ia, X, M, N
-):
-    I = np.zeros((3, 3)) # 3 colors for each one of the 3 vertices.
-    for i in range(3):
-        I[i] = total_lighting(
-            verts_3d[i], verts_n[i], verts_c[i], cam_pos, ka, kd, ks, n, light_positions, light_intensities, Ia
-        )
-        X[verts_p[i, 0]][verts_p[i, 1]] *= I[i]
-        verts_c[i] *= I[i]
-    X = shade_triangle(X, verts_p, verts_c, "gouraud", M, N)
-
-    return X
-
-
-
-def shade_phong(
-    verts_p, verts_n, verts_c, b_coords, cam_pos, ka, kd, ks, n,
-    light_position, light_intensities, Ia, X
-):
-    pass
-
-
-def render_object(
-    shader, focal, eye, lookat, up, bg_color, M, N, H, W, verts, vert_colors,
-    face_indices, ka, kd, ks, n, light_position, light_intensities, Ia
-):
-    img = initialize_img(M, N, bg_color)
-    normals = calculate_normals(verts, face_indices)
-    verts2d, depths = project_cam_lookat(focal, eye, lookat, up, verts)
-    verts_rast, __, __ = rasterize(verts2d, M, N, H, W)
-    verts_rast = verts_rast.astype(int)
-    keep_faces = get_keep_indices(face_indices, verts_rast, M, N)
-
-    num_faces = len(keep_faces)
-    b_coords = np.zeros((num_faces, 2))
-    img = color_vertices(img, vert_colors, verts_rast, keep_faces)
-
-    if shader == "gouraud":
-        for i in range(num_faces):
-            face = keep_faces[i]
-            b_coords[i] = find_barycenter(verts_rast[face])
-            img = shade_gouraud(
-                verts[face], verts_rast[face], normals[face], vert_colors[face], b_coords[i],
-                eye, ka, kd, ks, n, light_position, light_intensities, Ia, img, M, N
-            )
-        cv.imshow("img", img)
-        cv.waitKey(0)
-        cv.destroyAllWindows()
-    elif shader == "phong":
-        pass
-    else:
-        exit("`shader` can only be \"gouraud\" or \"phong\".")
