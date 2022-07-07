@@ -51,8 +51,9 @@ def find_barycenter(verts):
     return np.sum(verts, axis=0) / 3
 
 
-def save_image(img, img_w, img_h, filename: str):
-	for i in range(img_w):
-		for j in range(img_h):
+def save_image(img, filename: str):
+	for i in range(len(img)):
+		for j in range(len(img[0])):
 			img[i][j] = 255 * np.flip(img[i][j])
+	img = cv.rotate(img, cv.ROTATE_90_COUNTERCLOCKWISE)
 	cv.imwrite(filename, img)
