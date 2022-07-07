@@ -11,10 +11,11 @@
 2022 Aristotle University Thessaloniki - Computer Graphics
 """
 
-from util import *
+from shading import *
+import numpy as np
 
 
-data = np.load("hw3\\h3.npy", allow_pickle=True)[()]
+data = np.load("h3.npy", allow_pickle=True)[()]
 verts = data['verts']
 vertex_colors = data['vertex_colors']
 face_indices = data['face_indices']
@@ -34,3 +35,53 @@ N = data['N']
 W = data['W']
 H = data['H']
 bg_color = data['bg_color']
+
+f = 70 # taken from the second assignment data
+
+img = render_object(
+    "gouraud", f, cam_eye, cam_lookat, cam_up, bg_color, M, N, H, W,
+    verts, vertex_colors, face_indices, ka, kd, ks, n, light_positions, light_intensities, Ia
+)
+save_image(img, "gouraud_all.jpg")
+
+img = render_object(
+    "gouraud", f, cam_eye, cam_lookat, cam_up, bg_color, M, N, H, W,
+    verts, vertex_colors, face_indices, ka, 0, 0, n, light_positions, light_intensities, Ia
+)
+save_image(img, "gouraud_ambient.jpg")
+
+img = render_object(
+    "gouraud", f, cam_eye, cam_lookat, cam_up, bg_color, M, N, H, W,
+    verts, vertex_colors, face_indices, 0, kd, 0, n, light_positions, light_intensities, Ia
+)
+save_image(img, "gouraud_diffuse.jpg")
+
+img = render_object(
+    "gouraud", f, cam_eye, cam_lookat, cam_up, bg_color, M, N, H, W,
+    verts, vertex_colors, face_indices, 0, 0, ks, n, light_positions, light_intensities, Ia
+)
+save_image(img, "gouraud_specular.jpg")
+
+img = render_object(
+    "phong", f, cam_eye, cam_lookat, cam_up, bg_color, M, N, H, W,
+    verts, vertex_colors, face_indices, ka, kd, ks, n, light_positions, light_intensities, Ia
+)
+save_image(img, "phong_all.jpg")
+
+img = render_object(
+    "phong", f, cam_eye, cam_lookat, cam_up, bg_color, M, N, H, W,
+    verts, vertex_colors, face_indices, ka, 0, 0, n, light_positions, light_intensities, Ia
+)
+save_image(img, "phong_ambient.jpg")
+
+img = render_object(
+    "phong", f, cam_eye, cam_lookat, cam_up, bg_color, M, N, H, W,
+    verts, vertex_colors, face_indices, 0, kd, 0, n, light_positions, light_intensities, Ia
+)
+save_image(img, "phong_diffuse.jpg")
+
+img = render_object(
+    "phong", f, cam_eye, cam_lookat, cam_up, bg_color, M, N, H, W,
+    verts, vertex_colors, face_indices, 0, 0, ks, n, light_positions, light_intensities, Ia
+)
+save_image(img, "phong_specular.jpg")
