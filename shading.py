@@ -12,17 +12,16 @@ def render_object(
     shader, focal, eye, lookat, up, bg_color, M, N, H, W, verts, vert_colors,
     face_indices, ka, kd, ks, n, light_position, light_intensities, Ia
 ):
-    img = initialize_img(M, N, bg_color)
+    img = initialize_img(N, M, bg_color)
     normals = calculate_normals(verts, face_indices)
     verts2d, depths = project_cam_lookat(focal, eye, lookat, up, verts)
-    verts_rast, __, __ = rasterize(verts2d, M, N, H, W)
+    verts_rast, __, __ = rasterize(verts2d, N, M, H, W)
     verts_rast = verts_rast.astype(int)
 
-    keep_faces = get_keep_indices(face_indices, verts_rast, M, N)
+    keep_faces = get_keep_indices(face_indices, verts_rast, N, M)
     triangle_depths, idx = calculate_useful_depths(keep_faces, depths)
 
     num_faces = len(keep_faces)
-    img = color_vertices(img, vert_colors, verts_rast, keep_faces)
     b_coords = np.zeros((num_faces, 3))
     for i in range(num_faces):
         b_coords[i] = find_barycenter(verts[keep_faces[i]])
@@ -32,19 +31,19 @@ def render_object(
             face = keep_faces[idx[i]]
             img = shade_gouraud(
                 verts_rast[face], normals[face], vert_colors[face], b_coords[idx[i]],
-                eye, ka, kd, ks, n, light_position, light_intensities, Ia, img, M, N
+                eye, ka, kd, ks, n, light_position, light_intensities, Ia, img, N, M
             )
-        save_image(img, M, N, "image\\gouraud_all.jpg")
     elif shader == "phong":
         for i in range(num_faces):
             face = keep_faces[idx[i]]
             img = shade_phong(
                 verts_rast[face], normals[face], vert_colors[face], b_coords[idx[i]],
-                eye, ka, kd, ks, n, light_position, light_intensities, Ia, img, M, N
+                eye, ka, kd, ks, n, light_position, light_intensities, Ia, img, N, M
             )
-        save_image(img, M, N, "image\\phong_all.jpg")
     else:
         exit("`shader` can only be \"gouraud\" or \"phong\".")
+
+    return img
 
 
 def shade_gouraud(
@@ -58,7 +57,7 @@ def shade_gouraud(
         )
         X[verts_p[i, 0]][verts_p[i, 1]] = I
         verts_c[i] = I
-    X = shade_triangle(X, verts_p, verts_c, "gouraud", M, N)
+    X = shade_triangle(X, verts_p, verts_c, "gouraud", N, M)
     return X
 
 
@@ -81,7 +80,7 @@ def shade_phong(
     ymax = int(max(ykmax))
     return phong(
         X, verts_p, verts_n, verts_c, cam_pos, lines, ykmin, ykmax, ymin, ymax, b_coords,
-        ka, kd, ks, n, light_positions, light_intensities, Ia, M, N
+        ka, kd, ks, n, light_positions, light_intensities, Ia, N, M
     )
 
 
