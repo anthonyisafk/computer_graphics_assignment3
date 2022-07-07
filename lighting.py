@@ -28,7 +28,7 @@ def specular_light(P, N, color, cam_pos, ks, n, light_positions, light_intensiti
         L = light_positions[i] - P
         L_hat = normalize(L)
         cos_a = np.dot(N, L_hat)
-        cos_ba = abs(np.dot(2 * N * np.dot(N, L_hat) - L_hat, V_hat))
+        cos_ba = np.dot(2 * N * cos_a - L_hat, V_hat)
         if cos_ba <= 0 or cos_a <= 0:
             cos_ba = 0
         I[i] = ks * ((cos_ba) ** n) * light_intensities[i]
